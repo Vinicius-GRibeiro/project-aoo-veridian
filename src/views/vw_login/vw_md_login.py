@@ -80,6 +80,7 @@ class Btn:
                 self.page.session.set('logged_user_type', logged_user_type)
 
         reset_fields(email, password)
+        self.page.go(route='/home')
 
 
 class BtnText:

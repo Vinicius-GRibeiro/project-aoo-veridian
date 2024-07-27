@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from .md_database_manager import DataBaseManager
+from .md_credentials import Credentials
 from .md_log_manager import LogManager
 from psycopg2 import sql
 from flet import Page
@@ -186,9 +187,9 @@ class Doctor(User):
     def __init__(self, page: Page, cpf=None, fullname=None, birth_date=None, phone_1=None, email=None, zipcode=None, street=None,
                  number=None, neighborhood=None, city=None, state=None, country=None, user_type='médico',
                  created_by=None, gender=None, phone_2=None, complement=None, comments=None, user_id=None,
-                 crm=None, specialty=None, price=None):
+                 crm=None, specialty=None, price=None, password=None, login=None):
         super().__init__(page, cpf, fullname, birth_date, phone_1, email, zipcode, street, number, neighborhood,
-                         city, state, country, user_type, created_by, gender, phone_2, complement, comments, user_id)
+                         city, state, country, user_type, created_by, gender, phone_2, complement, comments)
 
         if user_id is not None:
             data = self.read_doctor(user_id=user_id)[0]
@@ -201,9 +202,12 @@ class Doctor(User):
         self.crm = crm
         self.specialty = specialty
         self.price = price
+        self.password = password
+        self.login = login
 
     def create_doctor(self):
         doc_id = self._create_user()
+        Credentials(self.page, user_id=doc_id, password=self.password, email=self.login).create_credential()
 
         if not doc_id:
             return False
@@ -295,9 +299,9 @@ class Patient(User):
     def __init__(self, page: Page, cpf=None, fullname=None, birth_date=None, phone_1=None, email=None, zipcode=None, street=None,
                  number=None, neighborhood=None, city=None, state=None, country=None, user_type='paciente',
                  created_by=None, gender=None, phone_2=None, complement=None, comments=None, user_id=None,
-                 insurance=None):
+                 insurance=None, password=None, login=None):
         super().__init__(page, cpf, fullname, birth_date, phone_1, email, zipcode, street, number, neighborhood,
-                         city, state, country, user_type, created_by, gender, phone_2, complement, comments, user_id)
+                         city, state, country, user_type, created_by, gender, phone_2, complement, comments)
 
         if user_id is not None:
             data = self.read_patient(user_id=user_id)[0]
@@ -305,9 +309,12 @@ class Patient(User):
             return
 
         self.insurance = insurance
+        self.password = password
+        self.login = login
 
     def create_patient(self):
         patient_id = self._create_user()
+        Credentials(self.page, user_id=patient_id, password=self.password, email=self.login).create_credential()
 
         if not patient_id:
             return False
@@ -397,13 +404,16 @@ class Employee(User):
     def __init__(self, page: Page, cpf=None, fullname=None, birth_date=None, phone_1=None, email=None, zipcode=None, street=None,
                  number=None, neighborhood=None, city=None, state=None, country=None, user_type='funcionário',
                  created_by=None, gender=None, phone_2=None, complement=None, comments=None, user_id=None,
-                 role=None):
+                 role=None, password=None, login=None):
         super().__init__(page, cpf, fullname, birth_date, phone_1, email, zipcode, street, number, neighborhood,
-                         city, state, country, user_type, created_by, gender, phone_2, complement, comments, user_id)
+                         city, state, country, user_type, created_by, gender, phone_2, complement, comments)
         self.role = role
+        self.password = password
+        self.login = login
 
     def create_employee(self):
         employee_id = self._create_user()
+        Credentials(self.page, user_id=employee_id, password=self.password, email=self.login).create_credential()
 
         if not employee_id:
             return False
@@ -487,3 +497,7 @@ class Employee(User):
         except (BaseException, psycopg2.DatabaseError) as e:
             self.logger.log_error(f"Erro ao excluir funcionário [{user_id}] - [{e}")
             return False
+
+
+class Special:
+    ...

@@ -38,11 +38,52 @@ class Menu:
             expand=True,
             controls=[
                 menu_item(value='Início', route='/home'),
-                menu_item(value='Agendamentos', route=None),
-                menu_item(value='Funcionários', route='/funcionarios'),
-                menu_item(value='Médicos', route=None),
-                menu_item(value='Pacientes', route=None),
-                menu_item(value='Usuários', route='/usuarios'),
+
+                menu_item(
+                    value='Agendamentos',
+                    route=None,
+                    content=SubmenuButton(  # AGENDAMENTO
+                        style=ButtonStyle(
+                            overlay_color='transparent',
+                            color={
+                                ControlState.DEFAULT: 'white',
+                                ControlState.HOVERED: colors.PRIMARY,
+                            },
+                        ),
+                        menu_style=MenuStyle(
+                            bgcolor='#22242A',
+                            alignment=alignment.center_left,
+                        ),
+                        content=Container(Text("Agendamentos")),
+                        controls=[
+                            menu_item(value='Criar agendamento', route='/criar_agendamento', icon=icons.BOOKMARK_ADD_ROUNDED),
+                            menu_item(value='Consultar agendamento', route='', icon=icons.BOOKMARKS_ROUNDED),
+                        ],
+                    )
+                ),
+
+                menu_item(
+                    value='Usuários',
+                    route=None,
+                    content=SubmenuButton(  # SUB CONTA
+                        style=ButtonStyle(
+                            overlay_color='transparent',
+                            color={
+                                ControlState.DEFAULT: 'white',
+                                ControlState.HOVERED: colors.PRIMARY,
+                            },
+                        ),
+                        menu_style=MenuStyle(
+                            bgcolor='#22242A',
+                            alignment=alignment.center_left,
+                        ),
+                        content=Container(Text("Usuários")),
+                        controls=[
+                            menu_item(value='Gerais', route='/geral_usuarios', icon=icons.PERSON_ROUNDED),
+                            menu_item(value='Novo usuário', route='/criar_usuarios', icon=icons.ADD_ROUNDED),
+                        ],
+                    )
+                ),
 
                 menu_item(
                     value='Conta',

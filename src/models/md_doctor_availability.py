@@ -7,7 +7,7 @@ import psycopg2
 
 
 class DocAvailability:
-    def __init__(self, page: Page, doctor_id=None, aval_id=None, aval_date=None, aval_hour=None):
+    def __init__(self, page: Page, doctor_id=None, aval_id=None, aval_date=None, aval_hour=None, created_by=None):
         self.logger = LogManager()
         self.page = page
 
@@ -68,9 +68,9 @@ class DocAvailability:
 
     def read_availability(self, columns='*', aval_id=None, condition=None):
         try:
-            query = f'SELECT {columns} FROM doctors_availability'
-            query += f' WHERE aval_id = {aval_id}' if aval_id is not None and condition is None else ''
-            query += f' WHERE {condition}' if condition is not None else ''
+            query = f"SELECT {columns} FROM doctors_availability"
+            query += f" WHERE aval_id = {aval_id}" if aval_id is not None and condition is None else ''
+            query += f" WHERE {condition}" if condition is not None else ''
 
             with DataBaseManager() as conn:
                 c = conn.cursor()
@@ -105,7 +105,7 @@ class DocAvailability:
     def delete_availability(self, aval_id):
         try:
             query = f'''
-                DELETE FROM doctors_availability WHERE aval_id = {aval_id}
+                UPDATE doctors_availability SET is_enabled = {False} WHERE aval_id = {aval_id};
             '''
 
             with DataBaseManager() as conn:
@@ -114,9 +114,9 @@ class DocAvailability:
                 conn.commit()
                 c.close()
 
-            self.logger.log_info(f'DISPONIBILIDADE MÉDICA [{aval_id}] foi excluida')
+            self.logger.log_info(f'DISPONIBILIDADE MÉDICA [{aval_id}] foi desabilitada/excluída')
             return True
         except (BaseException, psycopg2.DatabaseError) as e:
-            self.logger.log_error(f'Erro ao excluir DISPONIBILIDADE MÉDICA [{aval_id}] - [{e}]')
+            self.logger.log_error(f'Erro ao excluir/desabilitar DISPONIBILIDADE MÉDICA [{aval_id}] - [{e}]')
             return False
 

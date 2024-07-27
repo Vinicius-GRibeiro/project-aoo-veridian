@@ -8,7 +8,6 @@ from psycopg2 import sql
 from flet import Page
 import psycopg2
 
-
 class Credentials:
     def __init__(self, page:Page, credential_id=None, user_id=None, password=None, last_login=None, failed_attempts=None,
                  is_user_locked=None, lockout_time=None, email=None):
@@ -109,6 +108,17 @@ class Credentials:
                     conn.commit()
                 c.close()
             return False
+
+    def do_already_exists(self, login):
+        with DataBaseManager() as conn:
+            c = conn.cursor()
+            c.execute(f"SELECT EXISTS(SELECT 1 FROM credentials WHERE login_email = '{login}')")
+            email_exists = c.fetchone()[0]
+            c.close()
+
+        if email_exists:
+            return True
+        return False
 
     def create_credential(self):
         with DataBaseManager() as conn:
