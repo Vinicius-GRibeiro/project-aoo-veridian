@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from flet import *
-from src.models.md_users import User, Doctor
+from src.models.md_users import User, Doctor, Patient
 from abc import ABC, abstractmethod
 from src.models.md_doctor_availability import DocAvailability
 import datetime
+from src.controls.gui_utils import notify
+from src.models.md_appointments import Appointment
 
 BORDER_RADIUS = 10
 BORDER_COLORS = '#494D5F'
@@ -437,3 +439,195 @@ class RefreshButton(SimpleIconButton):
         elif self.type == 'médico':
             self.doctors_table.populate_table(conditions="user_type = 'médico'")
             self.page.update()
+
+
+class SimpleTextButton:
+    def __init__(self, page: Page, text: str, controls: list, width: int = 200):
+        self.page = page
+
+        self.text = text
+        self.width = width
+        self.patient_table: PatientsTable = controls[0]
+        self.doctor_table: DoctorsTable = controls[1]
+        self.aval_table: DoctorAvalTable = controls[2]
+
+        self.get = self._get()
+
+    def _get(self):
+        tb = TextButton(
+            content=Text(value=self.text, color=colors.ON_PRIMARY,
+                         font_family='nunito2'),
+            width=self.width,
+            style=ButtonStyle(
+                bgcolor=colors.PRIMARY,
+            ), on_click=lambda e: self._on_click_create_appointment(e)
+        )
+
+        return tb
+
+    def _on_click_create_appointment(self, e):
+        patient_id, doctor_id, aval_id = None, None, None
+
+        for row in self.patient_table.get.rows:
+            if row.selected:
+                patient_id = row.cells[0].content.value
+
+        for row in self.doctor_table.get.rows:
+            if row.selected:
+                doctor_id = row.cells[0].content.value
+
+        for row in self.aval_table.get.rows:
+            if row.selected:
+                aval_id = row.cells[0].content.value
+
+        if patient_id is None or doctor_id is None or aval_id is None:
+            notify(self.page, message='Selecione um paciente, um médico e um horário disponível para prosseguir',
+                   icon=icons.ERROR_ROUNDED)
+            return
+
+        patient_data = list(User(self.page).read_user(columns='cpf, fullname', user_id=patient_id)[0])
+        patient_data.append(Patient(self.page).read_patient(columns='insurance', user_id=patient_id)[0][0])
+
+        doctor_data = list(Doctor(self.page).read_doctor(columns='crm, specialty, price', user_id=doctor_id)[0])
+        doctor_data.append(User(self.page).read_user(columns='fullname', user_id=doctor_id)[0][0])
+
+        aval_data = DocAvailability(self.page).read_availability(columns='aval_date, aval_hour', aval_id=aval_id)[0]
+        formated_data = aval_data[0].strftime('%d/%m/%Y')
+        formated_hour = aval_data[1].strftime('%H:%M')
+
+
+        resume = Column(
+            spacing=20,
+            controls=[
+                Container(  # Patient
+                    border=border.only(left=BorderSide(2, colors.PRIMARY)),
+                    content=Column([
+                        Container(Text('Paciente', font_family='nunito2', color=colors.PRIMARY), padding=padding.only(left=5)),
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Nome: ', font_family='nunito2'),
+                                Text(value=patient_data[1], font_family='nunito')
+                            ]
+                        ),
+
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('CPF: ', font_family='nunito2'),
+                                Text(value=patient_data[0], font_family='nunito')
+                            ]
+                        ),
+
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Convênio: ', font_family='nunito2'),
+                                Text(value=patient_data[2], font_family='nunito')
+                            ]
+                        )
+                    ])
+                ),
+
+                Container(  # Doctor
+                    border=border.only(left=BorderSide(2, colors.PRIMARY)),
+                    content=Column([
+                        Container(Text('Médico', font_family='nunito2', color=colors.PRIMARY),
+                                  padding=padding.only(left=5)),
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Nome: ', font_family='nunito2'),
+                                Text(value=doctor_data[3], font_family='nunito')
+                            ]
+                        ),
+
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('CRM: ', font_family='nunito2'),
+                                Text(value=doctor_data[0], font_family='nunito')
+                            ]
+                        ),
+
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Especialidade: ', font_family='nunito2'),
+                                Text(value=doctor_data[1], font_family='nunito')
+                            ]
+                        )
+                    ])
+                ),
+
+                Container(  # Aval & Appointment
+                    border=border.only(left=BorderSide(2, colors.PRIMARY)),
+                    content=Column([
+                        Container(Text('CONSULTA', font_family='nunito2', color=colors.PRIMARY),
+                                  padding=padding.only(left=5)),
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Data: ', font_family='nunito2'),
+                                Text(value=formated_data, font_family='nunito')
+                            ]
+                        ),
+
+                        Row(
+                            controls=[
+                                Container(width=20),
+                                Text('Hora: ', font_family='nunito2'),
+                                Text(value=formated_hour, font_family='nunito')
+                            ]
+                        ),
+
+
+                    ])
+                ),
+
+                Container(height=20),
+
+                Row(
+                    controls=[
+                        Text('TOTAL: R$', font_family='nunito2', color=colors.PRIMARY),
+                        Text(value=Appointment(self.page).calculate_total_price(doctor_id), font_family='nunito')
+                    ]
+                )
+            ]
+        )
+
+        ad = AlertDialog(
+            title=Container(content=Text(value='Confirme os dados da consulta', font_family='nunito', color=colors.PRIMARY), padding=5),
+            content=resume,
+            actions=[
+                TextButton(text='Agendar consulta', on_click=lambda e: on_confirm_modal()),
+                TextButton(text='Cancelar', on_click=lambda e: _on_cancel_modal()),
+            ],
+            actions_alignment=MainAxisAlignment.END
+        )
+
+        self.page.open(ad)
+
+        def _on_cancel_modal():
+            self.page.close(ad)
+
+        def on_confirm_modal():
+            Appointment(self.page, patient_id=patient_id, doctor_id=doctor_id,
+                        date_aval_id=aval_id).create_appointment()
+            DocAvailability(self.page).update_availability(aval_id=aval_id, new_value=False)
+            for row in self.patient_table.get.rows:
+
+                if row.selected:
+                    row.selected = False
+
+            for row in self.doctor_table.get.rows:
+                if row.selected:
+                    row.selected = False
+
+            self.aval_table.get.rows.clear()
+
+            _on_cancel_modal()
+
+            self.page.update()
+
+            notify(self.page, message='A consulta foi marcada', icon=icons.DONE_ROUNDED)

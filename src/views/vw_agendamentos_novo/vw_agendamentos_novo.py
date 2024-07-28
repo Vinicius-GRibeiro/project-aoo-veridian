@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from flet import *
 from src.views.components.menu.md_menu import Menu
-from .vw_md_agendamentos_novo import PatientsTable, Txt, SearchButton, RefreshButton, Choose, DoctorsTable, DoctorAvalTable
+from .vw_md_agendamentos_novo import (PatientsTable, Txt, SearchButton, RefreshButton, Choose, DoctorsTable,
+                                      DoctorAvalTable, SimpleTextButton)
 
-VERTICAL_PAD = 10
+VERTICAL_PAD = 5
 HORIZONTAL_PAD = 20
 ROW_DIVIDER_WIDTH = 15
 COLUMN_SPACING = 7
@@ -43,6 +44,10 @@ class ViewAgendamentoNovo:
         self.btn_refresh_filters_doctors = RefreshButton(self.page, icon=icons.REFRESH_ROUNDED, user_type='médico',
                                                          controls=[self.doctors_table])
 
+        self.btn_create_appointment = SimpleTextButton(self.page, text='+ Criar consulta', controls=[
+            self.users_table, self.doctors_table, self.doc_aval_table
+        ])
+
         self.get_view = self._get_view()
 
     def __on_specialty_change(self, e: ControlEvent):
@@ -50,6 +55,7 @@ class ViewAgendamentoNovo:
             return
 
         self.doctors_table.populate_table(conditions=f"specialty = '{e.data}'", reverse=True)
+
         self.page.update()
 
     def _get_view(self) -> View:
@@ -64,6 +70,7 @@ class ViewAgendamentoNovo:
                         Row(controls=[Menu(self.page, selected_item='Agendamentos').get]),  # Menu row
                         Container(height=20),
                         Row(  # Content row
+                            alignment=MainAxisAlignment.CENTER,
                             spacing=0,
                             controls=[
                                 Container(width=5),
@@ -171,6 +178,14 @@ class ViewAgendamentoNovo:
 
                             ]
                         ),
+
+                        Row(
+                            alignment=MainAxisAlignment.END,
+                            controls=[
+                                Container(self.btn_create_appointment.get, padding=padding.only(top=10)),
+                                Container(width=60)
+                            ]
+                        )
                     ]
                 )
             ]

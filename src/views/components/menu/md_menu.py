@@ -57,7 +57,7 @@ class Menu:
                         content=Container(Text("Agendamentos")),
                         controls=[
                             menu_item(value='Criar agendamento', route='/criar_agendamento', icon=icons.BOOKMARK_ADD_ROUNDED),
-                            menu_item(value='Consultar agendamento', route='', icon=icons.BOOKMARKS_ROUNDED),
+                            menu_item(value='Consultar agendamento', route='/consultar_agendamento', icon=icons.BOOKMARKS_ROUNDED),
                         ],
                     )
                 ),

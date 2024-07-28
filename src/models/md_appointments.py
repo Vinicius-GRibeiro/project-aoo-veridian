@@ -3,13 +3,13 @@ from src.controls.utils import convert_money_from_db_to_float_money
 from .md_database_manager import DataBaseManager
 from .md_log_manager import LogManager
 from datetime import datetime
-from md_users import Doctor
+from .md_users import Doctor
 from psycopg2 import sql
 from flet import Page
 import psycopg2
 
 
-PROFIT_PORC = 0.3
+PROFIT_PORC = 0.4
 
 
 class Appointment:
@@ -42,9 +42,8 @@ class Appointment:
         self.canceled_for = None
         self.canceled_at = None
 
-    @staticmethod
-    def calculate_total_price(doc_id):
-        doc = Doctor(user_id=doc_id)
+    def calculate_total_price(self, doc_id):
+        doc = Doctor(self.page, user_id=doc_id)
         doc_price_float = convert_money_from_db_to_float_money(doc.price)
         return doc_price_float + (doc_price_float * PROFIT_PORC)
 
@@ -84,12 +83,14 @@ class Appointment:
             self.logger.log_error(message=f'Erro ao criar nova CONSULTA [{str(e)}]')
             return False
 
-    def read_appointment(self, columns='*', appointment_id=None, condition=None):
+    def read_appointment(self, columns='*', appointment_id=None, condition=None, order_by=None):
         try:
             query = f'SELECT {columns} FROM appointments'
             query += f' WHERE appointment_id = {appointment_id}' if (appointment_id is not None
                                                                      and condition is None) else ''
             query += f' WHERE {condition}' if condition is not None else ''
+
+            query += f" ORDER BY {order_by}" if order_by is not None else ''
 
             with DataBaseManager() as conn:
                 c = conn.cursor()
